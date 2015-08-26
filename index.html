@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset=utf-8 />
+    <title>Picasa-Map</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.mapbox.com/mapbox.js/v2.2.1/mapbox.js'></script>
+    <link href='https://api.mapbox.com/mapbox.js/v2.2.1/mapbox.css' rel='stylesheet' />
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    
+    <script src='usernames.json'></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id='map'></div>
+
+    <script>
+        $(document).ready(function () {
+
+            var user_id = usernames.user_id;
+            var album_id = usernames.album_id;
+            //attach a jQuery live event to the button
+
+            var url = "http://picasaweb.google.com/data/feed/base/user/:user_id/albumid/:album_id?alt=json&kind=photo";
+            url = url.replace(/:user_id/, user_id).replace(/:album_id/, album_id);
+            var theCenter;
+            var Images;
+            $.getJSON(url, function (data) {
+                //alert(data); //uncomment this for debug
+                //alert (data.item1+" "+data.item2+" "+data.item3); //further debug
+                Images = data.feed.entry;
+                var image1_src = Images[0].content.src;
+                //                var image1 = "<img src='" + image1_src + "' />";
+                //                $("#firstImage").append(image1);
+                var theImage = Images[0];
+                var image1Coordinates = theImage.georss$where.gml$Point.gml$pos.$t;
+                theCenter = image1Coordinates.split(" ");
+                nowMakeMap();
+            });
+
+
+            function nowMakeMap() {
+                var thisImage = Images[0];
+
+                L.mapbox.accessToken = usernames.mapBoxToken;
+
+                var map = L.mapbox.map('map', 'mapbox.streets')
+                    .setView([theCenter[0], theCenter[1]], 10);
+
+
+                var myLayer = L.mapbox.featureLayer().addTo(map);
+                var geoJson = [];
+
+                for (var i = 0; i < Images.length; i++) {
+                    var thumbnail = Images[i].media$group.media$thumbnail[0];
+                    var coordinate = Images[i].georss$where.gml$Point.gml$pos.$t;
+                    coordinate = coordinate.split(" ");
+
+                    var thisPhoto = {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [coordinate[1],
+                          coordinate[0]]
+                        },
+                        "properties": {
+                            "title": "Small astronaut",
+                            "icon": {
+                                "iconUrl": thumbnail.url,
+                                "iconSize": [50, 50], // size of the icon
+                                "iconAnchor": [25, 25], // point of the icon which will correspond to marker's location
+                                "popupAnchor": [0, -25], // point from which the popup should open relative to the iconAnchor
+                                "className": "dot"
+                            }
+                        }
+                    }
+                    geoJson.push(thisPhoto);
+                }
+
+                // Set a custom icon on each marker based on feature properties.
+                myLayer.on('layeradd', function (e) {
+                    var marker = e.layer,
+                        feature = marker.feature;
+
+                    marker.setIcon(L.icon(feature.properties.icon));
+                });
+
+                // Add features to the map.
+                myLayer.setGeoJSON(geoJson);
+
+            }
+        });
+    </script>
+</body>
+
+</html>
