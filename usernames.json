@@ -1,5 +1,0 @@
-var usernames = {
-    "user_id": "your_google_username",
-    "album_id": "Your_Web_album",
-    "mapBoxToken": "Your_mapbox_token"
-}
