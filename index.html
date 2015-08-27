@@ -10,7 +10,6 @@
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 
     <script src='usernames.json'></script>
-
     <style>
         body {
             margin: 0;
@@ -21,30 +20,58 @@
             position: absolute;
             top: 0;
             bottom: 0;
-            width: 100%;
+            left: 200px;
+            width: -moz-calc(100% - 200px);
+            width: -webkit-calc(100% - 200px);
+            width: calc(100% - 200px);
         }
         
         .markerClass {
-            border: 2px solid #fff;
-            box-shadow: 3px 3px 10px #888;
+            border: 2px solid #555;
+            box-shadow: 0px 0px 12px #888;
+        }
+        
+        #sidePanel {
+            width: 200px;
+            height: 100%;
+            background-color: #ddd;
+            position: absolute;
+            padding: 10px;
+            max-width: 200px;
         }
     </style>
 </head>
 
 <body>
+    <div id="sidePanel">
+        <h2>Picasa Map</h2>
+        <p>Picasa ID</p>
+        <input type="text" id="picasa_id">
+        <br />
+        <p>Album ID</p>
+        <input type="text" id="album_id">
+        <br />
+        <button onclick="loadPicasaAlbum()">Load</button>
+
+    </div>
     <div id='map'></div>
 
     <script>
-        $(document).ready(function () {
+        var myLayer;
+        var map;
+        var Images;
 
-            var user_id = usernames.user_id;
-            var album_id = usernames.album_id;
-            //attach a jQuery live event to the button
+        function loadPicasaAlbum() {
+            var user_id = $("#picasa_id").val()
+            var album_id = $("#album_id").val()
+            console.log('The picasa id is ' + user_id + 'and the album id is ' + album_id);
+            //
+            //            var user_id = usernames.user_id;
+            //            var album_id = usernames.album_id;
 
             var url = "http://picasaweb.google.com/data/feed/base/user/:user_id/albumid/:album_id?alt=json&kind=photo";
             url = url.replace(/:user_id/, user_id).replace(/:album_id/, album_id);
             var theCenter;
-            var Images;
             $.getJSON(url, function (data) {
                 //alert(data); //uncomment this for debug
                 //alert (data.item1+" "+data.item2+" "+data.item3); //further debug
@@ -52,76 +79,74 @@
                 var image1_src = Images[0].content.src;
                 //                var image1 = "<img src='" + image1_src + "' />";
                 //                $("#firstImage").append(image1);
-                var theImage = Images[0];
-                var image1Coordinates = theImage.georss$where.gml$Point.gml$pos.$t;
-                theCenter = image1Coordinates.split(" ");
-                nowMakeMap();
+                putPicasaOnMap();
             });
 
+        }
 
-            function nowMakeMap() {
-                var thisImage = Images[0];
+        function putPicasaOnMap() {
 
-                L.mapbox.accessToken = usernames.mapBoxToken;
+            var geoJson = [];
 
-                var map = L.mapbox.map('map', 'mapbox.streets')
-                    .setView([theCenter[0], theCenter[1]], 10);
+            for (var i = 0; i < Images.length; i++) {
+                var thumbnail = Images[i].media$group.media$thumbnail[0];
+                var largeImg = Images[i].media$group.media$thumbnail[2];
+                var coordinate = Images[i].georss$where.gml$Point.gml$pos.$t;
+                var photoTitle = Images[i].title.$t || "";
+                var photoLink = Images[i].content.src;
+                coordinate = coordinate.split(" ");
 
-
-                var myLayer = L.mapbox.featureLayer().addTo(map);
-                var geoJson = [];
-
-                for (var i = 0; i < Images.length; i++) {
-                    var thumbnail = Images[i].media$group.media$thumbnail[0];
-                    var largeImg = Images[i].media$group.media$thumbnail[2];
-                    var coordinate = Images[i].georss$where.gml$Point.gml$pos.$t;
-                    var photoTitle = Images[i].title.$t || "";
-                    var photoLink = Images[i].content.src;
-                    coordinate = coordinate.split(" ");
-
-                    var thisPhoto = {
-                        "type": "Feature",
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [coordinate[1],
-                          coordinate[0]]
+                var thisPhoto = {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [coordinate[1],
+                                      coordinate[0]]
+                    },
+                    "properties": {
+                        "title": photoTitle,
+                        "icon": {
+                            "iconUrl": thumbnail.url,
+                            "iconSize": [50, 50], // size of the icon
+                            "iconAnchor": [25, 25], // point of the icon which will correspond to marker's location
+                            "popupAnchor": [0, -25], // point from which the popup should open relative to the iconAnchor
+                            "className": "markerClass"
                         },
-                        "properties": {
-                            "title": photoTitle,
-                            "icon": {
-                                "iconUrl": thumbnail.url,
-                                "iconSize": [50, 50], // size of the icon
-                                "iconAnchor": [25, 25], // point of the icon which will correspond to marker's location
-                                "popupAnchor": [0, -25], // point from which the popup should open relative to the iconAnchor
-                                "className": "markerClass"
-                            },
-                            "image": largeImg.url,
-                            "photoLink": photoLink
-                        }
+                        "image": largeImg.url,
+                        "photoLink": photoLink
                     }
-                    geoJson.push(thisPhoto);
                 }
-
-                // Set a custom icon on each marker based on feature properties.
-                myLayer.on('layeradd', function (e) {
-                    var marker = e.layer,
-                        feature = marker.feature;
-                    marker.setIcon(L.icon(feature.properties.icon));
-
-                    // Create custom popup content
-                    var popupContent = '<a href="'+feature.properties.photoLink+'" target="blank"><h3>'+feature.properties.title+'</h3><br />' +
-                        '<img src="' + feature.properties.image + '" /></a>';
-
-                    marker.bindPopup(popupContent, {
-                        closeButton: true,
-                        minWidth: 310
-                    });
-                });
-
-                // Add features to the map.
-                myLayer.setGeoJSON(geoJson);
-
+                geoJson.push(thisPhoto);
             }
+
+            myLayer.on('layeradd', function (e) {
+                var marker = e.layer,
+                    feature = marker.feature;
+                marker.setIcon(L.icon(feature.properties.icon));
+
+                // Create custom popup content
+                var popupContent = '<a href="' + feature.properties.photoLink + '" target="blank"><h3>' + feature.properties.title + '</h3><br />' +
+                    '<img src="' + feature.properties.image + '" /></a>';
+
+                marker.bindPopup(popupContent, {
+                    closeButton: true,
+                    minWidth: 310
+                });
+            });
+
+            // Add features to the map.
+            myLayer.setGeoJSON(geoJson);
+            map.fitBounds(myLayer.getBounds());
+        }
+
+        $(document).ready(function () {
+            //Load the map
+            L.mapbox.accessToken = usernames.mapBoxToken;
+
+            map = L.mapbox.map('map', 'mapbox.streets')
+                .setView([0, 0], 4);
+
+            myLayer = L.mapbox.featureLayer().addTo(map);
         });
     </script>
 </body>
