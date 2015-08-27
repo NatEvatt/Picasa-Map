@@ -23,6 +23,8 @@
             bottom: 0;
             width: 100%;
         }
+        
+        
     </style>
 </head>
 
@@ -86,11 +88,24 @@
                                 "iconAnchor": [25, 25], // point of the icon which will correspond to marker's location
                                 "popupAnchor": [0, -25], // point from which the popup should open relative to the iconAnchor
                                 "className": "dot"
-                            }
+                            },
+                            "class": "NatClass"
                         }
                     }
                     geoJson.push(thisPhoto);
                 }
+                
+//                function makeGroup(color) {
+//      return new L.MarkerClusterGroup({
+//        iconCreateFunction: function(cluster) {
+//          return new L.DivIcon({
+//            iconSize: [20, 20],
+//            html: '<div style="text-align:center;color:#fff;background:' +
+//            color + '">' + cluster.getChildCount() + '</div>'
+//          });
+//        }
+//      }).addTo(map);
+//    }
 
                 // Set a custom icon on each marker based on feature properties.
                 myLayer.on('layeradd', function (e) {
