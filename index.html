@@ -7,39 +7,9 @@
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
     <script src='https://api.mapbox.com/mapbox.js/v2.2.1/mapbox.js'></script>
     <link href='https://api.mapbox.com/mapbox.js/v2.2.1/mapbox.css' rel='stylesheet' />
+    <link href='style.css' rel='stylesheet' />
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-
     <script src='usernames.json'></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-        }
-        
-        #map {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 200px;
-            width: -moz-calc(100% - 200px);
-            width: -webkit-calc(100% - 200px);
-            width: calc(100% - 200px);
-        }
-        
-        .markerClass {
-            border: 2px solid #555;
-            box-shadow: 0px 0px 12px #888;
-        }
-        
-        #sidePanel {
-            width: 200px;
-            height: 100%;
-            background-color: #ddd;
-            position: absolute;
-            padding: 10px;
-            max-width: 200px;
-        }
-    </style>
 </head>
 
 <body>
@@ -51,8 +21,10 @@
         <p>Album ID</p>
         <input type="text" id="album_id">
         <br />
-        <button onclick="loadPicasaAlbum()">Load</button>
-
+        <button onclick="loadPicasaAlbum()">Load</button><br />
+        <div class="loader">Loading...</div>
+        <div class="error">Unfortunately, it looks like there was an error.  Please check your Google Username and Album Id again.</div>
+        
     </div>
     <div id='map'></div>
 
@@ -62,24 +34,25 @@
         var Images;
 
         function loadPicasaAlbum() {
+            $(".error").css("display","none");
+            //display the loading image
+            $(".loader").css("display","block");
+            
             var user_id = $("#picasa_id").val()
             var album_id = $("#album_id").val()
             console.log('The picasa id is ' + user_id + 'and the album id is ' + album_id);
-            //
-            //            var user_id = usernames.user_id;
-            //            var album_id = usernames.album_id;
-
+            
             var url = "http://picasaweb.google.com/data/feed/base/user/:user_id/albumid/:album_id?alt=json&kind=photo";
             url = url.replace(/:user_id/, user_id).replace(/:album_id/, album_id);
             var theCenter;
             $.getJSON(url, function (data) {
-                //alert(data); //uncomment this for debug
-                //alert (data.item1+" "+data.item2+" "+data.item3); //further debug
                 Images = data.feed.entry;
                 var image1_src = Images[0].content.src;
-                //                var image1 = "<img src='" + image1_src + "' />";
-                //                $("#firstImage").append(image1);
                 putPicasaOnMap();
+            })
+            .error(function() { 
+                $(".error").css("display","block");
+                $(".loader").css("display","none");
             });
 
         }
@@ -137,6 +110,9 @@
             // Add features to the map.
             myLayer.setGeoJSON(geoJson);
             map.fitBounds(myLayer.getBounds());
+            
+            //remove the loading image
+            $(".loader").css("display","none");
         }
 
         $(document).ready(function () {
