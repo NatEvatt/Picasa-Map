@@ -10,121 +10,77 @@
     <link href='style.css' rel='stylesheet' />
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src='usernames.json'></script>
+    <script src='functions.js'></script>
 </head>
 
 <body>
     <div id="sidePanel">
-        <h2>Picasa Map</h2>
-        <p>Picasa ID</p>
-        <input type="text" id="picasa_id">
-        <br />
-        <p>Album ID</p>
-        <input type="text" id="album_id">
-        <br />
-        <button onclick="loadPicasaAlbum()">Load</button><br />
-        <div class="loader">Loading...</div>
-        <div class="error">Unfortunately, it looks like there was an error.  Please check your Google Username and Album Id again.</div>
-        
+        <div id="innerDiv">
+            <h2>Picasa Map</h2>
+            <p>Search a Picasa ID or Google Username</p>
+            <p class="hint">(Hint: if your gmail address is johnSmith@gmail.com search for johnsmith)</p>
+            <table id="searchTable">
+                <tr>
+                <td><input type="text" id="picasa_id"></td>
+                <td><button id="loadAlbumsButton">Search</button></td>
+                <td><button id='shareButton'>Share this Map</button></td>
+                </tr>
+            </table>
+            
+            <div id='shareDiv'>
+                
+                <input type='text' id='shareLinkInput' >
+            </div>
+
+            <div id="authorDetails">
+                <div id="authorImg"></div>
+                <div id="authorName"></div>
+                <div id="authorNumberAlbums"></div>
+            </div>
+            <table id="albumResults">
+
+            </table>
+            <br />
+            <div class="loader">Loading...</div>
+            <div class="error">Unfortunately, it looks like there was an error. Please check your Google Username and Album Id again.</div>
+
+        </div>
     </div>
-    <div id='map'></div>
+    <div id='rightPanel'>
+        <div id='map'></div>
+        <div id='mapLoaderContainer'>
+            <div class='mapLoader'></div>
+        </div>
+        <div id='noGPSMessage'>
+            <p>It looks like there are no GPS images in this album</p>
+            <p>Try another </p>
+        </div>
+    </div>
 
     <script>
-        var myLayer;
-        var map;
-        var Images;
+        //Load the map
+        L.mapbox.accessToken = usernames.mapBoxToken;
 
-        function loadPicasaAlbum() {
-            $(".error").css("display","none");
-            //display the loading image
-            $(".loader").css("display","block");
-            
-            var user_id = $("#picasa_id").val()
-            var album_id = $("#album_id").val()
-            console.log('The picasa id is ' + user_id + 'and the album id is ' + album_id);
-            
-            var url = "http://picasaweb.google.com/data/feed/base/user/:user_id/albumid/:album_id?alt=json&kind=photo";
-            url = url.replace(/:user_id/, user_id).replace(/:album_id/, album_id);
-            var theCenter;
-            $.getJSON(url, function (data) {
-                Images = data.feed.entry;
-                var image1_src = Images[0].content.src;
-                putPicasaOnMap();
-            })
-            .error(function() { 
-                $(".error").css("display","block");
-                $(".loader").css("display","none");
-            });
+        map = L.mapbox.map('map', 'mapbox.streets')
+            .setView([0, 0], 4);
 
-        }
+        myLayer = L.mapbox.featureLayer().addTo(map);
 
-        function putPicasaOnMap() {
+        $("#loadAlbumsButton").click(function () {
+            loadAlbumsButton();
+        });
+        
+        $("#shareButton").click(function () {
+            showShareLink();
+        });
 
-            var geoJson = [];
+        $("#albumResults").on("click", "tr", function () {
+            var albumId = $(this).attr("id");
+            loadPicasaAlbum(albumId);
 
-            for (var i = 0; i < Images.length; i++) {
-                var thumbnail = Images[i].media$group.media$thumbnail[0];
-                var largeImg = Images[i].media$group.media$thumbnail[2];
-                var coordinate = Images[i].georss$where.gml$Point.gml$pos.$t;
-                var photoTitle = Images[i].title.$t || "";
-                var photoLink = Images[i].content.src;
-                coordinate = coordinate.split(" ");
-
-                var thisPhoto = {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [coordinate[1],
-                                      coordinate[0]]
-                    },
-                    "properties": {
-                        "title": photoTitle,
-                        "icon": {
-                            "iconUrl": thumbnail.url,
-                            "iconSize": [50, 50], // size of the icon
-                            "iconAnchor": [25, 25], // point of the icon which will correspond to marker's location
-                            "popupAnchor": [0, -25], // point from which the popup should open relative to the iconAnchor
-                            "className": "markerClass"
-                        },
-                        "image": largeImg.url,
-                        "photoLink": photoLink
-                    }
-                }
-                geoJson.push(thisPhoto);
-            }
-
-            myLayer.on('layeradd', function (e) {
-                var marker = e.layer,
-                    feature = marker.feature;
-                marker.setIcon(L.icon(feature.properties.icon));
-
-                // Create custom popup content
-                var popupContent = '<a href="' + feature.properties.photoLink + '" target="blank"><h3>' + feature.properties.title + '</h3><br />' +
-                    '<img src="' + feature.properties.image + '" /></a>';
-
-                marker.bindPopup(popupContent, {
-                    closeButton: true,
-                    minWidth: 310
-                });
-            });
-
-            // Add features to the map.
-            myLayer.setGeoJSON(geoJson);
-            map.fitBounds(myLayer.getBounds());
-            
-            //remove the loading image
-            $(".loader").css("display","none");
-        }
-
-        $(document).ready(function () {
-            //Load the map
-            L.mapbox.accessToken = usernames.mapBoxToken;
-
-            map = L.mapbox.map('map', 'mapbox.streets')
-                .setView([0, 0], 4);
-
-            myLayer = L.mapbox.featureLayer().addTo(map);
         });
     </script>
+
 </body>
 
 </html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset=utf-8 />
+    <title>Picasa-Map</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.mapbox.com/mapbox.js/v2.2.1/mapbox.js'></script>
+    <link href='https://api.mapbox.com/mapbox.js/v2.2.1/mapbox.css' rel='stylesheet' />
+    <link href='style.css' rel='stylesheet' />
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src='usernames.json'></script>
+    <script src='functions.js'></script>
+</head>
+
+<body>
+
+    <!--    <div id='rightPanel'>-->
+    <div id='savedMap'></div>
+    <div id='mapLoaderContainer'>
+        <div class='mapLoader'></div>
+    </div>
+    <div id='noGPSMessage'>
+        <p>It looks like there are no GPS images in this album</p>
+        <p>Try another </p>
+    </div>
+    <!--    </div>-->
+    <script>
+        //Load the map
+        L.mapbox.accessToken = usernames.mapBoxToken;
+
+        map = L.mapbox.map('savedMap', 'mapbox.streets')
+            .setView([0, 0], 4);
+
+        myLayer = L.mapbox.featureLayer().addTo(map);
+
+
+        $(document).ready(function () {
+
+            getUrlVariables();
+
+        });
+    </script>
+
+</body>
+
+</html>
