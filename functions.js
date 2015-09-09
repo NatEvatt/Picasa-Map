@@ -20,9 +20,9 @@ function loadAlbumsButton() {
 
             var imgString = "<img src='" + picasaAuthorIcon + "' />";
             $("#authorName").text(picasaAuthor);
-            $("#authorNumberAlbums").text("Number of Albums: "+data.feed.entry.length);
+            $("#authorNumberAlbums").text("Number of Albums: " + data.feed.entry.length);
             $("#authorImg").append(imgString);
-            $("#authorDetails").css("display","block");
+            $("#authorDetails").css("display", "block");
 
             for (var i = 0; i < data.feed.entry.length; i++) {
                 var albumId = getAlbumId(data.feed.entry[i].id.$t);
@@ -37,7 +37,6 @@ function loadAlbumsButton() {
                     $(".loader").css("display", "none");
                 }
             }
-
         })
         .error(function (message) {
             console.log(message);
@@ -55,7 +54,7 @@ function insertAlbum(albumId, albumTitle, albumThumbnail, albumPublished) {
 }
 
 function clearPrevious() {
-    $("#authorDetails").css("display","none"); //clear author
+    $("#authorDetails").css("display", "none"); //clear author
     $("#authorName").empty(); //clear author
     $("#authorNumberAlbums").empty(); //clear author
     $("#authorImg").empty(); //clear author picture
@@ -92,6 +91,7 @@ function loadPicasaAlbum(id) {
 function putPicasaOnMap() {
 
     var geoJson = [];
+    var markerCluster = L.markerClusterGroup();
 
     for (var i = 0; i < Images.length; i++) {
         if (typeof Images[i].georss$where != "undefined") {
@@ -102,33 +102,54 @@ function putPicasaOnMap() {
             var photoTitle = Images[i].title.$t || "";
             var photoLink = Images[i].content.src;
             coordinate = coordinate.split(" ");
+/************  This is the GeoJson Code ******************* */
+            //            var thisPhoto = {
+            //                "type": "Feature",
+            //                "geometry": {
+            //                    "type": "Point",
+            //                    "coordinates": [coordinate[1],
+            //                                      coordinate[0]]
+            //                },
+            //                "properties": {
+            //                    "title": photoTitle,
+            //                    "icon": {
+            //                        "iconUrl": thumbnail.url,
+            //                        "iconSize": [50, 50], // size of the icon
+            //                        "iconAnchor": [25, 25], // point of the icon which will correspond to marker's location
+            //                        "className": "markerClass"
+            //                    },
+            //                    "image": largeImg.url,
+            //                    "photoLink": photoLink
+            //                }
+            //            }
 
-            var thisPhoto = {
-                "type": "Feature",
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [coordinate[1],
-                                      coordinate[0]]
-                },
-                "properties": {
-                    "title": photoTitle,
-                    "icon": {
-                        "iconUrl": thumbnail.url,
-                        "iconSize": [50, 50], // size of the icon
-                        "iconAnchor": [25, 25], // point of the icon which will correspond to marker's location
-                        "popupAnchor": [0, -25], // point from which the popup should open relative to the iconAnchor
-                        "className": "markerClass"
-                    },
-                    "image": largeImg.url,
-                    "photoLink": photoLink
-                }
-            }
+            var title = photoTitle;
+            var thisPhoto = L.marker(new L.LatLng(coordinate[0], coordinate[1]), {
+                icon: L.icon({
+                    'iconUrl': thumbnail.url,
+                    'iconSize': [50, 50], // size of the icon
+                    'iconAnchor': [25, 25], // point of the icon which will correspond to marker's location
+                    'popupAnchor': [0, -25], // point from which the popup should open relative to the iconAnchor
+                    'className': "markerClass"
+                }),
+                title: title
+            });
+
+            // Create custom popup content
+            var popupContent = '<a href="' + photoLink + '" target="blank"><h3>' + title + '</h3><br />' +
+                '<img src="' + largeImg.url + '" /></a>';
+
+            thisPhoto.bindPopup(popupContent, {
+                closeButton: true,
+                minWidth: 310
+            });
+            //            thisPhoto.bindPopup(title);
             geoJson.push(thisPhoto);
+            markerCluster.addLayer(thisPhoto);
         }
         if (i == Images.length - 1) {
             //After all images remove mapLoader
             $(".mapLoader").css("display", "none");
-
 
             if (geoJson.length == 0) {
                 displayNoGPSMessage(); //if no images have gps, display a notice
@@ -154,8 +175,9 @@ function putPicasaOnMap() {
     });
 
     // Add features to the map.
-    myLayer.setGeoJSON(geoJson);
-    map.fitBounds(myLayer.getBounds());
+    //    myLayer.setGeoJSON(geoJson);
+    map.addLayer(markerCluster);
+    map.fitBounds(markerCluster.getBounds());
 
     //remove the loading image
     $(".loader").css("display", "none");
@@ -176,9 +198,8 @@ function getUrlVariables() {
     loadPicasaAlbum(album_id);
 }
 
-function showShareLink(){
+function showShareLink() {
     var shareUrl = "http://natsmaps.com/Picasa-Map/loadSaved.html?user_id=" + user_id + "&album_id=" + album_id; //Create the Link
-    $("#shareLinkInput").val(shareUrl);//Insert the Link into the input 
-    $("#shareLinkInput").css("display","block").select();//show the input box
-    //focus on input box
+    $("#shareLinkInput").val(shareUrl); //Insert the Link into the input 
+    $("#shareLinkInput").css("display", "block").select(); //show the input boxs
 }
