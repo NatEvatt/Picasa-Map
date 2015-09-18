@@ -5,15 +5,13 @@
     <meta charset=utf-8 />
     <title>Picasa-Map</title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-    <script src='https://api.mapbox.com/mapbox.js/v2.2.1/mapbox.js'></script>
     <link href='https://api.mapbox.com/mapbox.js/v2.2.1/mapbox.css' rel='stylesheet' />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
     <link href='style.css' rel='stylesheet' />
-<!--
-    <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-markercluster/v0.4.0/MarkerCluster.css' rel='stylesheet' />
-    <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-markercluster/v0.4.0/MarkerCluster.Default.css' rel='stylesheet' />
--->
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src='https://api.mapbox.com/mapbox.js/v2.2.1/mapbox.js'></script>
     <script src="leaflet.markercluster.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <script src='usernames.json'></script>
     <script src='functions.js'></script>
 </head>
@@ -22,18 +20,30 @@
     <div id="sidePanel">
         <div id="innerDiv">
             <h2>Picasa Map</h2>
-            <p>Search a Picasa ID or Google Username</p>
-            <p class="hint">(Hint: if your gmail address is johnSmith@gmail.com search for johnsmith)</p>
+            <p>Search a Google Username</p>
+            <p class="hint">(if your gmail address is johnSmith@gmail.com search for johnsmith)</p>
             <table id="searchTable">
                 <tr>
                     <td>
                         <input type="text" id="picasa_id">
                     </td>
                     <td>
-                        <button id="loadAlbumsButton">Search</button>
+                        <button id="loadAlbumsButton" class="btn btn-default">Search</button>
                     </td>
                     <td>
-                        <button id='shareButton'>Share this Map</button>
+                        <!--                        <button id='shareButton'>Share this Map</button>-->
+                        <div class="dropdown">
+                            <button id='shareButton' class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                Share
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                                <li id='shareLink'><a href="#">Link</a>
+                                </li>
+                                <li id='shareEmbed'><a href="#">Embed</a>
+                                </li>
+                            </ul>
+                        </div>
                     </td>
                 </tr>
             </table>
@@ -77,34 +87,6 @@
 
         myLayer = L.mapbox.featureLayer().addTo(map);
 
-        $("#loadAlbumsButton").click(function () {
-            loadAlbumsButton();
-        });
-
-        $("#shareButton").click(function () {
-            showShareLink();
-        });
-
-        $("#albumResults").on("click", "tr", function () {
-            var albumId = $(this).attr("id");
-            loadPicasaAlbum(albumId);
-
-        });
-
-        (function (i, s, o, g, r, a, m) {
-            i['GoogleAnalyticsObject'] = r;
-            i[r] = i[r] || function () {
-                (i[r].q = i[r].q || []).push(arguments)
-            }, i[r].l = 1 * new Date();
-            a = s.createElement(o),
-                m = s.getElementsByTagName(o)[0];
-            a.async = 1;
-            a.src = g;
-            m.parentNode.insertBefore(a, m)
-        })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
-
-        ga('create', 'UA-35212537-1', 'auto');
-        ga('send', 'pageview');
     </script>
 
 </body>

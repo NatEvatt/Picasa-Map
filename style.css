@@ -18,6 +18,10 @@ body {
     width: calc(100% - 400px);
 }
 
+.h3, h3 {
+    margin-top: 0px !important;
+}
+
 #savedMap {
     position: absolute;
     top: 0;
@@ -62,6 +66,7 @@ body {
 
 .albumImg {
     width: 75px;
+    border-radius: 37.5px;
 }
 
 .individualAlbum {
@@ -84,6 +89,20 @@ body {
 
 table {
     width: 100%;
+}
+
+.albumDetails {
+    height: 0px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.albumDetails:hover {
+    background-color: #eee;
+}
+
+.albumTitle {
+    padding-left: 5px;
 }
 
 #albumResults tr {
@@ -243,7 +262,7 @@ p {
 }
 
 .marker-cluster-small div {
-/*    background-color: rgba(136, 136, 136, 0.6);*/
+    /*    background-color: rgba(136, 136, 136, 0.6);*/
     /*    background-color: rgba(110, 204, 57, 0.6);*/
 }
 
@@ -253,7 +272,7 @@ p {
 }
 
 .marker-cluster-medium div {
-/*    background-color: rgba(136, 136, 136, 0.6);*/
+    /*    background-color: rgba(136, 136, 136, 0.6);*/
     /*    background-color: rgba(240, 194, 12, 0.6);*/
 }
 
@@ -263,7 +282,7 @@ p {
 }
 
 .marker-cluster-large div {
-/*    background-color: rgba(136, 136, 136, 0.6);*/
+    /*    background-color: rgba(136, 136, 136, 0.6);*/
     /*    background-color: purple;*/
 }
 /* IE 6-8 fallback colors */
@@ -311,4 +330,8 @@ p {
 
 .marker-cluster span {
     line-height: 30px;
+}
+
+.authorImgSrc {
+    border-radius: 32px;
 }

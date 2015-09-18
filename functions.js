@@ -2,7 +2,9 @@ var myLayer;
 var map;
 var Images;
 var user_Id;
+var user_number;
 var album_id;
+var openAlbumDetails;
 
 function loadAlbumsButton() {
     //clear the previous results
@@ -17,8 +19,10 @@ function loadAlbumsButton() {
     $.getJSON(url, function (data) {
             var picasaAuthor = data.feed.author[0].name.$t;
             var picasaAuthorIcon = data.feed.icon.$t;
+            var userNumberDirty = data.feed.author[0].uri.$t
+            user_number = userNumberDirty.split('/').pop();
 
-            var imgString = "<img src='" + picasaAuthorIcon + "' />";
+            var imgString = "<img src='" + picasaAuthorIcon + "' class='authorImgSrc' />";
             $("#authorName").text(picasaAuthor);
             $("#authorNumberAlbums").text("Number of Albums: " + data.feed.entry.length);
             $("#authorImg").append(imgString);
@@ -35,6 +39,7 @@ function loadAlbumsButton() {
                 if (i == data.feed.entry.length - 1) {
                     //remove the loading image
                     $(".loader").css("display", "none");
+                    $(".error").css("display", "none");
                 }
             }
         })
@@ -48,7 +53,7 @@ function loadAlbumsButton() {
 
 function insertAlbum(albumId, albumTitle, albumThumbnail, albumPublished) {
 
-    var newRow = "<tr id='" + albumId + "' ><td style='width:75px'><img class='albumImg' src='" + albumThumbnail + "' /></td><td>" + albumTitle + "</td></tr>";
+    var newRow = "<tr id='" + albumId + "' ><td style='width:75px'><img class='albumImg' src='" + albumThumbnail + "' /></td><td><p class='albumTitle'>" + albumTitle + "</p></td></tr><td colspan='2' id='details" + albumId + "' class='albumDetails'></td><tr>";
 
     $("#albumResults").append(newRow);
 }
@@ -69,6 +74,12 @@ function getAlbumId(idString) {
 
 function loadPicasaAlbum(id) {
     album_id = id;
+
+    //unhighlight current open web map
+    if (typeof openAlbumDetails != "undefined") {
+        var oldAlbumId = openAlbumDetails.replace("details", "");
+        $("#"+oldAlbumId).css("background-color","#eee");
+    }
     $(".error").css("display", "none");
     //display the loading image
     $(".mapLoader").css("display", "block");
@@ -80,7 +91,7 @@ function loadPicasaAlbum(id) {
     $.getJSON(url, function (data) {
             Images = data.feed.entry;
             var image1_src = Images[0].content.src;
-            putPicasaOnMap();
+            putPicasaOnMap(data);
         })
         .error(function () {
             $(".error").css("display", "block");
@@ -88,10 +99,15 @@ function loadPicasaAlbum(id) {
         });
 }
 
-function putPicasaOnMap() {
-
+function putPicasaOnMap(data) {
     var geoJson = [];
     var markerCluster = L.markerClusterGroup();
+    var albumTitle = data.feed.title.$t;
+    var numberOfEntries = data.feed.entry.length;
+    var updated = data.feed.updated.$t.split('T')[0];
+    //    updated = updated.split('T')[0];
+    //var linkWebAlbum = //https://picasaweb.google.com/107375869608905315121/Bolzano_bike_trip
+    var linkGooglePlus = "https://plus.google.com/photos/" + user_number + "/albums/" + album_id;
 
     for (var i = 0; i < Images.length; i++) {
         if (typeof Images[i].georss$where != "undefined") {
@@ -102,7 +118,7 @@ function putPicasaOnMap() {
             var photoTitle = Images[i].title.$t || "";
             var photoLink = Images[i].content.src;
             coordinate = coordinate.split(" ");
-/************  This is the GeoJson Code ******************* */
+            /************  This is the GeoJson Code ******************* */
             //            var thisPhoto = {
             //                "type": "Feature",
             //                "geometry": {
@@ -154,7 +170,8 @@ function putPicasaOnMap() {
             if (geoJson.length == 0) {
                 displayNoGPSMessage(); //if no images have gps, display a notice
             } else {
-                $("#shareButton").css("visibility", "visible"); //display the Share Button 
+                $("#shareButton").css("visibility", "visible"); //display the Share Button
+                showAlbumDetails(albumTitle, geoJson.length, numberOfEntries, updated, linkGooglePlus);
             }
         }
     }
@@ -183,6 +200,36 @@ function putPicasaOnMap() {
     $(".loader").css("display", "none");
 }
 
+function showAlbumDetails(title, numberGeoTagged, numberOfEntries, updated, linkGooglePlus) {
+
+    closeAlbumDetails();
+
+    var detailsId = "details" + album_id;
+    $("#" + detailsId).animate({
+        height: 200
+    }, 200);
+
+    var theString = "<h3>" + title + "</h3>";
+    theString += "<p>Displaying " + numberGeoTagged + " of " + numberOfEntries + " photos</p>";
+    theString += "<p>Last Updated: " + updated + "</p>";
+    theString += "<button class='btn btn-default'><a href='" + linkGooglePlus + "' target='blank'>View Google+ Album</a></button>";
+    $("#" + detailsId).html(theString);
+    $("#" + album_id).css("background-color", "#fff"); //highlight title
+
+    openAlbumDetails = detailsId; //update the new opened album details variable
+}
+
+function closeAlbumDetails() {
+    //check if details from another web album are open and if so close it
+    if (typeof openAlbumDetails !== 'undefined') {
+        $("#" + openAlbumDetails).html("");
+        $("#" + openAlbumDetails).animate({
+            height: 0
+        }, 200);
+
+    }
+}
+
 function displayNoGPSMessage() {
     $("#noGPSMessage").css("display", "block");
     setTimeout(function () {
@@ -199,7 +246,40 @@ function getUrlVariables() {
 }
 
 function showShareLink() {
-    var shareUrl = "http://natsmaps.com/Picasa-Map/loadSaved.html?user_id=" + user_id + "&album_id=" + album_id; //Create the Link
+    var shareUrl = createShareLink();
     $("#shareLinkInput").val(shareUrl); //Insert the Link into the input 
     $("#shareLinkInput").css("display", "block").select(); //show the input boxs
 }
+
+function showShareEmbed() {
+    var shareUrl = createShareLink();
+    var shareEmbed = '<iframe width="560" height="315" src="' + shareUrl + '" frameborder="0" allowfullscreen></iframe>';
+    $("#shareLinkInput").val(shareEmbed); //Insert the Link into the input 
+    $("#shareLinkInput").css("display", "block").select(); //show the input boxs
+}
+
+function createShareLink() {
+    var shareUrl = "http://natsmaps.com/Picasa-Map/loadSaved.html?user_id=" + user_id + "&album_id=" + album_id; //Create the Link
+    return shareUrl;
+}
+
+/*  ************** Click Events  *************  */
+
+$(document).ready(function () {
+    $("#loadAlbumsButton").click(function () {
+        loadAlbumsButton();
+    });
+
+    $("#shareLink").click(function () {
+        showShareLink();
+    });
+
+    $("#shareEmbed").click(function () {
+        showShareEmbed();
+    });
+
+    $("#albumResults").on("click", "tr", function () {
+        var albumId = $(this).attr("id");
+        loadPicasaAlbum(albumId);
+    });
+});
