@@ -152,7 +152,7 @@ function putPicasaOnMap(data) {
             });
 
             // Create custom popup content
-            var popupContent = '<a href="' + photoLink + '" target="blank"><h3>' + title + '</h3><br />' +
+            var popupContent = '<a href="' + photoLink + '" data-featherlight="image" ><h3>' + title + '</h3><br />' +
                 '<img src="' + largeImg.url + '" /></a>';
 
             thisPhoto.bindPopup(popupContent, {
